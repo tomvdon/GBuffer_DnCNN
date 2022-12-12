@@ -1,39 +1,39 @@
 {
-  "task": "9channel_fast_dncnnColorBunny"  //  root/task/images-models-options
+  "task": "9channel_fast_dncnnColorCornell_super"  //  root/task/images-models-options
   , "model": "plain" // "plain"
   , "gpu_ids": [0]
 
-  , "scale": 1       // broadcast to "netG" if SISR
+  , "scale": 2       // broadcast to "netG" if SISR
   , "n_channels": 3  // broadcast to "datasets", 1 for grayscale, 3 for color
 
   , "merge_bn": true               // BN for DnCNN
   , "merge_bn_startpoint": 400000  // merge BN after N iterations
 
   , "path": {
-    "root": "denoising"            // "denoising" | "superresolution"
+    "root": "superresolution"            // "denoising" | "superresolution"
     , "pretrained_netG": null     // path of pretrained model
   }
 
   , "datasets": {
     "train": {
       "name": "train_dataset"           // just name
-      , "dataset_type": "plain"         // "dncnn" | "dnpatch" for dncnn,  | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch"
-      , "dataroot_H": "trainsets/bunnyH"// path of H training dataset
-      , "dataroot_L": "trainsets/bunnyL"              // path of L training dataset
-      , "H_size": 40                    // patch size 40 | 64 | 96 | 128 | 192
+      , "dataset_type": "sr"         // "dncnn" | "dnpatch" for dncnn,  | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch"
+      , "dataroot_H": "trainsets/cornell_og_H"// path of H training dataset
+      , "dataroot_L": "trainsets/cornell_og_L_low"              // path of L training dataset
+      , "H_size": 40                   // patch size 40 | 64 | 96 | 128 | 192
 
       , "sigma": null                     // 15, 25, 50 for DnCNN | [0, 75] for FFDNet and FDnCNN
       , "sigma_test": null                // 15, 25, 50 for DnCNN and ffdnet
 
       , "dataloader_shuffle": true
-      , "dataloader_num_workers": 16
+      , "dataloader_num_workers": 8
       , "dataloader_batch_size": 64     // batch size 1 | 16 | 32 | 48 | 64 | 128
     }
     , "test": {
       "name": "test_dataset"            // just name
-      , "dataset_type": "plain"         // "dncnn" | "dnpatch" for dncnn,  | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch"
-      , "dataroot_H": "testsets/bunnyH"  // path of H testing dataset
-      , "dataroot_L": "testsets/bunnyL"              // path of L testing dataset
+      , "dataset_type": "sr"         // "dncnn" | "dnpatch" for dncnn,  | "fdncnn" | "ffdnet" | "sr" | "srmd" | "dpsr" | "plain" | "plainpatch"
+      , "dataroot_H": "testsets/cornell_og_H"  // path of H testing dataset
+      , "dataroot_L": "testsets/cornell_og_L_low"              // path of L testing dataset
 
       , "sigma": null                    // 15, 25, 50 for DnCNN | [0, 75] for FFDNet and FDnCNN
       , "sigma_test": null               // 15, 25, 50 for DnCNN and ffdnet
@@ -46,7 +46,7 @@
     , "in_nc": 9      // input channel number
     , "out_nc": 3      // ouput channel number
     , "nc": 64          // 64 for "dncnn"
-    , "nb": 10          // 17 for "dncnn", 20 for dncnn3, 16 for "srresnet"
+    , "nb": 20          // 17 for "dncnn", 20 for dncnn3, 16 for "srresnet"
     , "gc": 32          // unused
     , "ng": 2           // unused
     , "reduction" : 16  // unused
@@ -74,7 +74,7 @@
     , "G_regularizer_orthstep": null    // unused
     , "G_regularizer_clipstep": null    // unused
 
-    , "checkpoint_test": 5000          // for testing
+    , "checkpoint_test": 100          // for testing
     , "checkpoint_save": 5000           // for saving model
     , "checkpoint_print": 1           // for print
   }

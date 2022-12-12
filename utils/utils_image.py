@@ -4,6 +4,7 @@ import random
 import numpy as np
 import torch
 import cv2
+import xml.etree.ElementTree as ET
 from torchvision.utils import make_grid
 from datetime import datetime
 # import torchvision.transforms as transforms
@@ -24,6 +25,49 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP', '.tif']
+
+
+def h_image_helper(L_paths, H_paths):
+    print(L_paths)
+    new_H_paths = []
+    for L_path in L_paths:
+        head, tail = os.path.split(L_path)
+        preface, _ = tail.split(".spp")
+
+        # ------------------------------------
+        # get H image
+        # ------------------------------------
+        head, _ = os.path.split(H_paths[0])
+
+        H_path = os.path.join(head, preface + ".spp_5000.png")
+        new_H_paths.append(H_path)
+        print(H_path)
+    return new_H_paths
+
+def g_buffer2tensor(G_buffer_path, x_res, y_res):
+    tree = ET.parse(G_buffer_path)
+    items = [[float(item.text) for item in ch if "t" != item.tag] for ch in tree.findall('item')] 
+    ar = np.asarray(items)
+    ar = np.fliplr(ar.reshape(x_res, y_res, 6))
+    return ar
+
+def g_buffer_helper(L_paths, x_res, y_res):
+    G_paths = []
+    for L_path in L_paths:
+        preface, _ = L_path.split(".spp")
+        G_path = preface + "GBUFFER"
+        if (os.path.exists(G_path + ".pt")):
+            print("Pickle Exists")
+        else:
+            G_buffer_tensor = g_buffer2tensor(G_path, x_res, y_res)
+            torch.save(G_buffer_tensor, G_path + ".pt")
+        G_paths.append(G_path + ".pt")
+        print(G_path)
+    return G_paths
+def get_g_buffer_array(G_buffer_path):
+    ar = torch.load(G_buffer_path)
+    return ar
+
 
 
 def is_image_file(filename):
@@ -286,7 +330,7 @@ def uint2tensor4(img):
 def uint2tensor3(img):
     if img.ndim == 2:
         img = np.expand_dims(img, axis=2)
-    return torch.from_numpy(np.ascontiguousarray(img)).permute(2, 0, 1).float().div(255.)
+    return torch.from_numpy(np.ascontiguousarray(img).copy()).permute(2, 0, 1).float().div(255.)
 
 
 # convert 2/3/4-dimensional torch tensor to uint

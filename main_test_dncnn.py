@@ -82,13 +82,14 @@ def main():
 
     if 'color' in args.model_name:
         n_channels = 3        # fixed, 1 for grayscale image, 3 for color image
-    else:
+    else: 
         n_channels = 1        # fixed for grayscale image
+    n_channels = 3
     if args.model_name in ['dncnn_gray_blind', 'dncnn_color_blind', 'dncnn3']:
         nb = 20               # fixed
     else:
         nb = 17               # fixed
-
+    nb = 20
     result_name = args.testset_name + '_' + args.model_name     # fixed
     border = args.sf if args.task_current == 'sr' else 0        # shave boader to calculate PSNR and SSIM
     model_path = os.path.join(args.model_pool, args.model_name+'.pth')
@@ -116,8 +117,8 @@ def main():
     # ----------------------------------------
 
     from models.network_dncnn import DnCNN as net
-    model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')
-    # model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='BR')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
+   # model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')
+    model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='BR')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
     model.load_state_dict(torch.load(model_path), strict=True)
     model.eval()
     for k, v in model.named_parameters():

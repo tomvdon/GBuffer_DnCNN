@@ -27,6 +27,10 @@ class DatasetSR(data.Dataset):
         # ------------------------------------
         self.paths_H = util.get_image_paths(opt['dataroot_H'])
         self.paths_L = util.get_image_paths(opt['dataroot_L'])
+        self.paths_H = util.h_image_helper(self.paths_L, self.paths_H)
+        self.paths_G_Buffer = util.g_buffer_helper(self.paths_L, 800, 800)
+
+
 
         assert self.paths_H, 'Error: H path is empty.'
         if self.paths_L and self.paths_H:
@@ -57,6 +61,9 @@ class DatasetSR(data.Dataset):
             L_path = self.paths_L[index]
             img_L = util.imread_uint(L_path, self.n_channels)
             img_L = util.uint2single(img_L)
+            G_buffer_path = self.paths_G_Buffer[index]
+            g_buffer = util.get_g_buffer_array(G_buffer_path)
+            img_L = np.concatenate([img_L, g_buffer], axis=2)
 
         else:
             # --------------------------------
@@ -75,9 +82,11 @@ class DatasetSR(data.Dataset):
             # --------------------------------
             # randomly crop the L patch
             # --------------------------------
+            
             rnd_h = random.randint(0, max(0, H - self.L_size))
             rnd_w = random.randint(0, max(0, W - self.L_size))
             img_L = img_L[rnd_h:rnd_h + self.L_size, rnd_w:rnd_w + self.L_size, :]
+            print(img_L.shape)
 
             # --------------------------------
             # crop corresponding H patch

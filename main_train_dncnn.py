@@ -13,10 +13,12 @@ from torch.utils.data import DataLoader
 from utils import utils_logger
 from utils import utils_image as util
 from utils import utils_option as option
+from utils import utils_bnorm as cool
 
 from data.select_dataset import define_Dataset
 from models.select_model import define_Model
 
+from torch.utils.tensorboard import SummaryWriter
 
 '''
 # --------------------------------------------
@@ -50,11 +52,11 @@ def main(json_path='options/train_dncnn.json'):
     # Step--1 (prepare opt)
     # ----------------------------------------
     '''
-
+    writer = SummaryWriter()
     parser = argparse.ArgumentParser()
     parser.add_argument('-opt', type=str, default=json_path, help='Path to option JSON file.')
-
     opt = option.parse(parser.parse_args().opt, is_train=True)
+    print(opt['path']['pretrained_netG'])
     util.mkdirs((path for key, path in opt['path'].items() if 'pretrained' not in key))
 
     # ----------------------------------------
@@ -62,7 +64,8 @@ def main(json_path='options/train_dncnn.json'):
     # ----------------------------------------
     # -->-->-->-->-->-->-->-->-->-->-->-->-->-
     init_iter, init_path_G = option.find_last_checkpoint(opt['path']['models'], net_type='G')
-    opt['path']['pretrained_netG'] = init_path_G
+    #opt['path']['pretrained_netG'] = init_path_G
+    #print("!!!!" + init_path_G + "!!!!!")
     current_step = init_iter
 
     border = 0
@@ -133,9 +136,7 @@ def main(json_path='options/train_dncnn.json'):
     # Step--3 (initialize model)
     # ----------------------------------------
     '''
-
     model = define_Model(opt)
-
     if opt['merge_bn'] and current_step > opt['merge_bn_startpoint']:
         logger.info('^_^ -----merging bnorm----- ^_^')
         model.merge_bnorm_test()
@@ -149,21 +150,16 @@ def main(json_path='options/train_dncnn.json'):
     # Step--4 (main training)
     # ----------------------------------------
     '''
-
+    print("!!!!MAINTRAIN")
     for epoch in range(1000000):  # keep running
         for i, train_data in enumerate(train_loader):
-
             current_step += 1
 
             if dataset_type == 'dnpatch' and current_step % 20000 == 0:  # for 'train400'
                 train_loader.dataset.update_data()
 
-            # -------------------------------
-            # 1) update learning rate
-            # -------------------------------
-            model.update_learning_rate(current_step)
 
-            # -------------------------------
+                        # -------------------------------
             # 2) feed patch pairs
             # -------------------------------
             model.feed_data(train_data)
@@ -172,6 +168,13 @@ def main(json_path='options/train_dncnn.json'):
             # 3) optimize parameters
             # -------------------------------
             model.optimize_parameters(current_step)
+            
+            # -------------------------------
+            # 1) update learning rate
+            # -------------------------------
+            model.update_learning_rate(current_step)
+
+
 
             # -------------------------------
             # merge bnorm
@@ -188,7 +191,9 @@ def main(json_path='options/train_dncnn.json'):
                 logs = model.current_log()  # such as loss
                 message = '<epoch:{:3d}, iter:{:8,d}, lr:{:.3e}> '.format(epoch, current_step, model.current_learning_rate())
                 for k, v in logs.items():  # merge log information into message
+                    writer.add_scalar(k, v, current_step )
                     message += '{:s}: {:.3e} '.format(k, v)
+                writer.add_scalar("lr", model.current_learning_rate(), current_step )
                 logger.info(message)
 
             # -------------------------------
@@ -240,6 +245,8 @@ def main(json_path='options/train_dncnn.json'):
 
                 # testing log
                 logger.info('<epoch:{:3d}, iter:{:8,d}, Average PSNR : {:<.2f}dB\n'.format(epoch, current_step, avg_psnr))
+                writer.add_scalar("Average PSNR", avg_psnr, current_step )
+
 
     logger.info('Saving the final model.')
     model.save('latest')

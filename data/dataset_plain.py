@@ -2,6 +2,7 @@ import random
 import numpy as np
 import torch.utils.data as data
 import utils.utils_image as util
+import os
 
 
 class DatasetPlain(data.Dataset):
@@ -26,26 +27,34 @@ class DatasetPlain(data.Dataset):
         # ------------------------------------
         self.paths_H = util.get_image_paths(opt['dataroot_H'])
         self.paths_L = util.get_image_paths(opt['dataroot_L'])
+        self.paths_H = util.h_image_helper(self.paths_L, self.paths_H)
+        #x_res, y_res, _ = self.paths_L[0].shape
+        ##CHANGE FOR NEW VALUES
+        self.paths_G_Buffer = util.g_buffer_helper(self.paths_L, 800, 800)
 
         assert self.paths_H, 'Error: H path is empty.'
         assert self.paths_L, 'Error: L path is empty. Plain dataset assumes both L and H are given!'
         if self.paths_L and self.paths_H:
-            assert len(self.paths_L) == len(self.paths_H), 'L/H mismatch - {}, {}.'.format(len(self.paths_L), len(self.paths_H))
+            assert len(self.paths_L) == len(self.paths_H), 'L/H mismatch - {}, {}.'.format(len(self.paths_L), len(self.paths_H)) 
 
     def __getitem__(self, index):
-
-        # ------------------------------------
-        # get H image
-        # ------------------------------------
-        H_path = self.paths_H[index]
-        img_H = util.imread_uint(H_path, self.n_channels)
 
         # ------------------------------------
         # get L image
         # ------------------------------------
         L_path = self.paths_L[index]
         img_L = util.imread_uint(L_path, self.n_channels)
+        G_buffer_path = self.paths_G_Buffer[index]
+        g_buffer = util.get_g_buffer_array(G_buffer_path)
+        img_L = np.concatenate([img_L, g_buffer], axis=2)
+        # Add G_Buffer
 
+        # ------------------------------------
+        # get H image
+        # ------------------------------------
+
+        H_path = self.paths_H[index]
+        img_H = util.imread_uint(H_path, self.n_channels)
         # ------------------------------------
         # if train, get L/H patch pair
         # ------------------------------------
@@ -56,6 +65,7 @@ class DatasetPlain(data.Dataset):
             # --------------------------------
             # randomly crop the patch
             # --------------------------------
+            patch_L = img_L
             rnd_h = random.randint(0, max(0, H - self.patch_size))
             rnd_w = random.randint(0, max(0, W - self.patch_size))
             patch_L = img_L[rnd_h:rnd_h + self.patch_size, rnd_w:rnd_w + self.patch_size, :]
@@ -78,7 +88,6 @@ class DatasetPlain(data.Dataset):
             # HWC to CHW, numpy(uint) to tensor
             # --------------------------------
             img_L, img_H = util.uint2tensor3(img_L), util.uint2tensor3(img_H)
-
         return {'L': img_L, 'H': img_H, 'L_path': L_path, 'H_path': H_path}
 
     def __len__(self):

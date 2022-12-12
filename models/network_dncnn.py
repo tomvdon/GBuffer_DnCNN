@@ -67,8 +67,10 @@ class DnCNN(nn.Module):
         self.model = B.sequential(m_head, *m_body, m_tail)
 
     def forward(self, x):
+        print(x.shape)
         n = self.model(x)
-        return x-n
+        #Hope this is noise
+        return x[:, 0:3, ... ] - n
 
 
 # --------------------------------------------

@@ -45,7 +45,7 @@
     , "gc": 32
     , "ng": 2
     , "reduction" : 16
-    , "act_mode": "R" // "BR" for BN+ReLU | "R" for ReLU
+    , "act_mode": "B" // "BR" for BN+ReLU | "R" for ReLU
     , "upsample_mode": "convtranspose" // "pixelshuffle" | "convtranspose" | "upconv"
     , "downsample_mode": "strideconv" // "strideconv" | "avgpool" | "maxpool"
 

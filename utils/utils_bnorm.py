@@ -75,6 +75,7 @@ def add_bn(model):
             b.weight.data.fill_(1)
             new_m = nn.Sequential(model._modules[k], b)
             model._modules[k] = new_m
+            model._modules[k].cuda()
         add_bn(m)
 
 

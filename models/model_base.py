@@ -1,7 +1,7 @@
 import os
 import torch
 import torch.nn as nn
-from utils.utils_bnorm import merge_bn, tidy_sequential
+from utils.utils_bnorm import merge_bn, tidy_sequential, add_bn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 
@@ -59,10 +59,10 @@ class ModelBase():
 
     def update_learning_rate(self, n):
         for scheduler in self.schedulers:
-            scheduler.step(n)
+            scheduler.step()
 
     def current_learning_rate(self):
-        return self.schedulers[0].get_lr()[0]
+        return self.schedulers[0].get_last_lr()[0]
 
     def requires_grad(self, model, flag=True):
         for p in model.parameters():
@@ -160,6 +160,7 @@ class ModelBase():
     # ----------------------------------------
     def load_network(self, load_path, network, strict=True, param_key='params'):
         network = self.get_bare_model(network)
+        strict = False
         if strict:
             state_dict = torch.load(load_path)
             if param_key in state_dict.keys():
@@ -174,6 +175,8 @@ class ModelBase():
                 state_dict[key] = param_old
             network.load_state_dict(state_dict, strict=True)
             del state_dict_old, state_dict
+        add_bn(network)
+        
 
     # ----------------------------------------
     # save the state_dict of the optimizer
